@@ -15,11 +15,29 @@ import { Synth } from "./js/synth.js";
 
 var dx7 = new Synth();
 
-var keys = "awsdrftghujikol;".split("");
+var keys = "awsedftgyhujkolp;".split("");
 var keyMap = {};
-keys.forEach((k, i) => keyMap[k] = i + 69);
+keys.forEach((k, i) => keyMap[k] = i + 72);
 
 document.documentElement.addEventListener("keydown", function(e) {
+  if (e.key == "]") {
+    dx7.algorithm = (dx7.algorithm + 1) % 33
+    if (dx7.algorithm == 0) dx7.algorithm++;
+    console.log(dx7.algorithm);
+    return;
+  }
+  if (e.key == "[") {
+    dx7.algorithm -= 1;
+    if (dx7.algorithm < 1) dx7.algorithm = 32;
+    console.log(dx7.algorithm);
+    return;
+  }
+  if ("123456".includes(e.key)) {
+    var operator = dx7.operators[e.key - 1];
+    operator.enabled = "enabled" in operator ? !operator.enabled : false;
+    console.log(e.key, operator.enabled);
+    return;
+  }
   var note = keyMap[e.key];
   if (!note) return;
   var f = dx7.midiToFrequency(note);
