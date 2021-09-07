@@ -52,29 +52,36 @@ export class Operator {
     this.osc.frequency.value = 0;
     this.osc.connect(this.envelope);
 
+    // the modulation gain adjusts the pitch up and down
+    // it starts at 1, but signals get piped into its gain
+    // they then sum, so they become the new multiplier
     this.modulation = new GainNode(context, config);
     this.modulation.connect(this.osc.frequency);
+    this.modulation.gain.value = 0;
 
     var offset = new ConstantSourceNode(context, config);
+    offset.connect(this.modulation.gain);
     offset.start();
-    // offset.connect(this.modulation.gain);
 
-    this.feedback = new GainNode(context, config);
-    this.feedback.connect(this.modulation);
-    this.feedback.gain.value = this.options.feedback;
-
+    // this is the base pitch, but will be adjusted by modulation
     this.pitch = new ConstantSourceNode(context, config);
     this.pitch.start();
     this.pitch.connect(this.modulation);
 
+    // feedback is an additional modulator, built-in
+    this.feedback = new GainNode(context, config);
+    this.feedback.connect(this.modulation.gain);
+    this.feedback.gain.value = this.options.feedback;
+
     this.pitchEnvelope = new ConstantSourceNode(context, config);
-    this.pitchEnvelope.offset.value = this.options.detune;
+    this.pitchEnvelope.offset.value = this.options.detune * 1;
     this.pitchEnvelope.connect(this.osc.detune);
   }
 
   start(t, frequency, velocity) {
 
     if (!this.options.enabled) return;
+
     this.pitch.offset.value = this.options.fixed || (frequency * this.options.frequencyRatio);
 
     this.osc.start(t);

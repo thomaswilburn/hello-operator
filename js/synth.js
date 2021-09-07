@@ -6,7 +6,7 @@ var acConfig = {
 };
 
 export class Voice {
-  constructor(context, operators, algorithm) {
+  constructor(context, operators) {
     this.operators = operators.map(o => new Operator(context, o));
   }
 
@@ -25,7 +25,7 @@ export class Voice {
     for (var m of algorithm.modulators) {
       var a = this.operators[m.from - 1];
       var b = this.operators[m.to - 1];
-      if (a && b) {
+      if (a && b && a.options.enabled) {
         a.output.connect(b.modulation.gain);
         console.log(`Connecting modulator: ${m.from} -> ${m.to}`)
       }
@@ -34,7 +34,7 @@ export class Voice {
       var f = algorithm.feedback;
       var a = this.operators[f.from - 1];
       var b = this.operators[f.to - 1];
-      if (a && b) {
+      if (a && b && a.options.enabled) {
         a.output.connect(b.feedback);
         console.log(`Connecting feedback: ${f.from} -> ${f.to}`)
       }
@@ -56,19 +56,25 @@ export class Synth {
 
     var context = this.context = new AudioContext();
 
+    var sustain = 0;
+    var release = .1;
+
     this.operators = [
-      { sustain: 0, decay: 5, detune: 5 },
-      { level: .6, detune: 1 },
-      { level: 1, detune: -1 },
-      { sustain: 0, decay: 1.5, detune: -5, enabled: false },
-      { sustain: 0, decay: 5, detune: 1},
-      { frequencyRatio: 2 }
+      { sustain, release, decay: 10, detune: 6 },
+      { level: .3, detune: 1 },
+      { enabled: false },
+      { sustain, release, decay: 1.5, detune: -5 },
+      { detune: 1},
+      { frequencyRatio: 3 }
     ];
 
     this.algorithm = 10;
 
     this.amp = new GainNode(context, acConfig);
     this.amp.connect(context.destination);
+
+    this.compressor = new DynamicsCompressorNode(context, acConfig);
+    this.compressor.connect(this.amp);
   }
 
   midiToFrequency(midi) {
@@ -83,7 +89,7 @@ export class Synth {
     var voice = this.voices.get(frequency);
     if (voice) return;
     voice = new Voice(this.context, this.operators);
-    voice.assemble(this.amp, this.algorithm);
+    voice.assemble(this.compressor, this.algorithm);
     this.voices.set(frequency, voice);
     voice.start(this.context.currentTime, frequency, velocity);
   }
