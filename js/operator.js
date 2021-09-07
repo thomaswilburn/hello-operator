@@ -53,13 +53,19 @@ export class Operator {
     this.osc.connect(this.envelope);
 
     this.modulation = new GainNode(context, config);
-    // this is key! you need a lot of gain to convert from signal to cents
-    this.modulation.gain.value = this.options.depth;
-    this.modulation.connect(this.osc.detune);
+    this.modulation.connect(this.osc.frequency);
+
+    var offset = new ConstantSourceNode(context, config);
+    offset.start();
+    // offset.connect(this.modulation.gain);
 
     this.feedback = new GainNode(context, config);
     this.feedback.connect(this.modulation);
     this.feedback.gain.value = this.options.feedback;
+
+    this.pitch = new ConstantSourceNode(context, config);
+    this.pitch.start();
+    this.pitch.connect(this.modulation);
 
     this.pitchEnvelope = new ConstantSourceNode(context, config);
     this.pitchEnvelope.offset.value = this.options.detune;
@@ -69,7 +75,7 @@ export class Operator {
   start(t, frequency, velocity) {
 
     if (!this.options.enabled) return;
-    this.osc.frequency.value = this.options.fixed || (frequency * this.options.frequencyRatio);
+    this.pitch.offset.value = this.options.fixed || (frequency * this.options.frequencyRatio);
 
     this.osc.start(t);
 

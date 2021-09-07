@@ -26,7 +26,7 @@ export class Voice {
       var a = this.operators[m.from - 1];
       var b = this.operators[m.to - 1];
       if (a && b) {
-        a.output.connect(b.modulation);
+        a.output.connect(b.modulation.gain);
         console.log(`Connecting modulator: ${m.from} -> ${m.to}`)
       }
     }
@@ -57,12 +57,12 @@ export class Synth {
     var context = this.context = new AudioContext();
 
     this.operators = [
-      { attack: .1, sustain: 0, decay: 5 },
-      { sustain: 0, decay: 3, detune: 1 },
-      { sustain: 0, hold: 3, decay: 3, detune: -1 },
+      { sustain: 0, decay: 5, detune: 5 },
+      { level: .6, detune: 1 },
+      { level: 1, detune: -1 },
       { sustain: 0, decay: 1.5, detune: -5, enabled: false },
       { sustain: 0, decay: 5, detune: 1},
-      { frequencyRatio: 3 }
+      { frequencyRatio: 2 }
     ];
 
     this.algorithm = 10;
