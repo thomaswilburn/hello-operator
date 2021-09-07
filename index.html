@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Hello Operator</title>
+  </head>
+  <body>
+
+    <h1>Hello Operator</h1>
+
+    <script type="module">
+
+import { Synth } from "./js/synth.js";
+
+var dx7 = new Synth();
+
+var keys = "awsdrftghujikol;".split("");
+var keyMap = {};
+keys.forEach((k, i) => keyMap[k] = i + 69);
+
+document.documentElement.addEventListener("keydown", function(e) {
+  var note = keyMap[e.key];
+  if (!note) return;
+  var f = dx7.midiToFrequency(note);
+  dx7.noteOn(f, 255);
+});
+
+document.documentElement.addEventListener("keyup", function(e) {
+  var note = keyMap[e.key];
+  if (!note) return;
+  var f = dx7.midiToFrequency(note);
+  dx7.noteOff(f);
+});
+
+    </script>
+  </body>
+</html>
