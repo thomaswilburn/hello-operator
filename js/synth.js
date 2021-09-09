@@ -6,11 +6,11 @@ var acConfig = {
 };
 
 export class Voice {
-  constructor(context, operators) {
-    this.operators = operators.map(o => new Operator(context, o));
+  constructor(context, settings) {
+    this.operators = settings.map(o => new Operator(context, o));
   }
 
-  assemble(output, a) {
+  assemble(output, a, verbose) {
     // here's where we should assemble them according to the schema
     // for now we're just connecting stuff to output
     var algorithm = algorithms[a];
@@ -19,7 +19,7 @@ export class Voice {
       var op = this.operators[c.from - 1];
       if (op) {
         op.output.connect(output);
-        console.log(`Connecting carrier: ${c.from}`)
+        if (verbose) console.log(`Connecting carrier: ${c.from}`)
       }
     }
     for (var m of algorithm.modulators) {
@@ -27,7 +27,7 @@ export class Voice {
       var b = this.operators[m.to - 1];
       if (a && b && a.options.enabled) {
         a.output.connect(b.modulation.gain);
-        console.log(`Connecting modulator: ${m.from} -> ${m.to}`)
+        if (verbose) console.log(`Connecting modulator: ${m.from} -> ${m.to}`)
       }
     }
     if (algorithm.feedback) {
@@ -36,8 +36,14 @@ export class Voice {
       var b = this.operators[f.to - 1];
       if (a && b && a.options.enabled) {
         a.output.connect(b.feedback);
-        console.log(`Connecting feedback: ${f.from} -> ${f.to}`)
+        if (verbose) console.log(`Connecting feedback: ${f.from} -> ${f.to}`)
       }
+    }
+  }
+
+  disassemble() {
+    for (var op of this.operators) {
+      op.output.disconnect();
     }
   }
 
@@ -46,7 +52,9 @@ export class Voice {
   }
 
   stop() {
-    this.operators.forEach(o => o.stop());
+    for (var op of this.operators) {
+      op.stop();
+    }
   }
 }
 
@@ -59,7 +67,7 @@ export class Synth {
     var sustain = 0;
     var release = .1;
 
-    this.operators = [
+    this.settings = [
       { sustain, release, decay: 10, detune: 6 },
       { level: .3, detune: 1 },
       { enabled: false },
@@ -68,13 +76,21 @@ export class Synth {
       { frequencyRatio: 3 }
     ];
 
-    this.algorithm = 10;
-
+    // build some output processing
     this.amp = new GainNode(context, acConfig);
     this.amp.connect(context.destination);
-
     this.compressor = new DynamicsCompressorNode(context, acConfig);
     this.compressor.connect(this.amp);
+
+    this.setAlgorithm(10);
+  }
+
+  setAlgorithm(id) {
+    this.algorithm = id;
+    // preview the algorithm
+    var v = new Voice(this.context, this.settings);
+    v.assemble(this.compressor, id, true);
+    v.disassemble();
   }
 
   midiToFrequency(midi) {
@@ -84,11 +100,10 @@ export class Synth {
   }
 
   noteOn(frequency, velocity) {
-    console.log("synth", frequency);
     this.context.resume();
     var voice = this.voices.get(frequency);
     if (voice) return;
-    voice = new Voice(this.context, this.operators);
+    voice = new Voice(this.context, this.settings);
     voice.assemble(this.compressor, this.algorithm);
     this.voices.set(frequency, voice);
     voice.start(this.context.currentTime, frequency, velocity);
@@ -101,5 +116,11 @@ export class Synth {
     this.voices.delete(frequency);
   }
 
+  toggleOperator(index) {
+    var operator = this.settings[index];
+    if (!operator) return;
+    operator.enabled = "enabled" in operator ? !operator.enabled : false;
+    console.log(`Toggled operator #${index + 1}: ${operator.enabled ? "on" : "off"}`);
+  }
 
 }

@@ -33,10 +33,7 @@ document.documentElement.addEventListener("keydown", function(e) {
     return;
   }
   if ("123456".includes(e.key)) {
-    var operator = dx7.operators[e.key - 1];
-    operator.enabled = "enabled" in operator ? !operator.enabled : false;
-    console.log(e.key, operator.enabled);
-    return;
+    return dx7.toggleOperator(e.key - 1);
   }
   var note = keyMap[e.key];
   if (!note) return;
@@ -73,9 +70,7 @@ var onMIDI = function(e) {
       break;
 
     case DISCRETE:
-      var operator = dx7.operators[key];
-      operator.enabled = "enabled" in operator ? !operator.enabled : false;
-      console.log(key + 1, operator.enabled);
+      dx7.toggleOperator(key);
       break;
   }
 }
@@ -84,7 +79,6 @@ var getMidi = async function() {
   var midi = await navigator.requestMIDIAccess();
   for (var [ key, entry ] of midi.inputs) {
     entry.onmidimessage = onMIDI;
-    console.log(entry);
   }
 };
 
