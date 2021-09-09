@@ -41,7 +41,7 @@ document.documentElement.addEventListener("keydown", function(e) {
   var note = keyMap[e.key];
   if (!note) return;
   var f = dx7.midiToFrequency(note);
-  dx7.noteOn(f, 255);
+  dx7.noteOn(f, 127);
 });
 
 document.documentElement.addEventListener("keyup", function(e) {
@@ -50,6 +50,45 @@ document.documentElement.addEventListener("keyup", function(e) {
   var f = dx7.midiToFrequency(note);
   dx7.noteOff(f);
 });
+
+const NOTE = 144;
+const ENCODER = 176;
+const DISCRETE = 192;
+const PITCH = 224;
+
+const VOLUME = 7;
+const MODULATION = 1;
+
+var onMIDI = function(e) {
+  var [ type, key, value ] = e.data;
+  console.log(type, key, value);
+  switch (type) {
+    case NOTE:
+      var f = dx7.midiToFrequency(key);
+      if (value) {
+        dx7.noteOn(f, value);
+      } else {
+        dx7.noteOff(f);
+      }
+      break;
+
+    case DISCRETE:
+      var operator = dx7.operators[key];
+      operator.enabled = "enabled" in operator ? !operator.enabled : false;
+      console.log(key + 1, operator.enabled);
+      break;
+  }
+}
+
+var getMidi = async function() {
+  var midi = await navigator.requestMIDIAccess();
+  for (var [ key, entry ] of midi.inputs) {
+    entry.onmidimessage = onMIDI;
+    console.log(entry);
+  }
+};
+
+getMidi();
 
     </script>
   </body>
