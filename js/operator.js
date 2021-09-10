@@ -5,19 +5,13 @@ basically treat operators as similarly disposable. Each is used for the
 duration of a single note, as part of a "voice." That means they have to be
 configurable quickly and easily.
 
-TODO
-- add feedback controls
-- only play if enabled
-- add getters for inputs/outputs
-- create a balanced input node to prevent overdrive
-- 
-
 */
 
 var base = {
   enabled: true,
   fixed: false,
-  frequencyRatio: 1,
+  coarse: 1,
+  fine: 0,
   velocityScale: 1,
   attack: 0,
   hold: 0,
@@ -25,7 +19,6 @@ var base = {
   sustain: 1,
   release: 0,
   wave: "sine",
-  detune: 0,
   depth: 1200,
   level: 1,
   feedback: 0
@@ -72,17 +65,14 @@ export class Operator {
     this.feedback = new GainNode(context, config);
     this.feedback.connect(this.modulation.gain);
     this.feedback.gain.value = this.options.feedback;
-
-    this.pitchEnvelope = new ConstantSourceNode(context, config);
-    this.pitchEnvelope.offset.value = this.options.detune * 1;
-    this.pitchEnvelope.connect(this.osc.detune);
   }
 
   start(t, frequency, velocity) {
 
     if (!this.options.enabled) return;
 
-    this.pitch.offset.value = this.options.fixed || (frequency * this.options.frequencyRatio);
+    var frequencyRatio = this.options.coarse + this.options.fine;
+    this.pitch.offset.value = this.options.fixed || (frequency * frequencyRatio);
 
     this.osc.start(t);
 

@@ -5,6 +5,18 @@ var acConfig = {
   channels: 1
 };
 
+var sustain = 0;
+var release = .1;
+
+const EPIANO = [
+  { sustain, release, decay: 10 },
+  { level: .3 },
+  { enabled: false },
+  { sustain, release, decay: 1.5 },
+  { },
+  { coarse: 3 }
+];
+
 export class Voice {
   constructor(context, settings) {
     this.operators = settings.map(o => new Operator(context, o));
@@ -64,17 +76,7 @@ export class Synth {
 
     var context = this.context = new AudioContext();
 
-    var sustain = 0;
-    var release = .1;
-
-    this.settings = [
-      { sustain, release, decay: 10, detune: 6 },
-      { level: .3, detune: 1 },
-      { enabled: false },
-      { sustain, release, decay: 1.5, detune: -5 },
-      { detune: 1},
-      { frequencyRatio: 3 }
-    ];
+    this.settings = JSON.parse(JSON.stringify(EPIANO));
 
     // build some output processing
     this.amp = new GainNode(context, acConfig);
