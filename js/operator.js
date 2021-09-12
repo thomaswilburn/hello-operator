@@ -7,7 +7,7 @@ configurable quickly and easily.
 
 */
 
-var base = {
+export const OPERATOR_DEFAULTS = {
   enabled: true,
   fixed: false,
   coarse: 1,
@@ -30,7 +30,7 @@ export class Operator {
     this.context = context;
 
     // merge in options
-    this.options = { ...base, ...options };
+    this.options = { ...OPERATOR_DEFAULTS, ...options };
 
     var config = { channels: 1 };
 

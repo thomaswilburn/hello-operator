@@ -1,0 +1,9 @@
+:root {
+  --foreground: black;
+  --background: white;
+  font-family: sans-serif;
+}
+
+rotary-encoder {
+  font-size: 80%;
+}

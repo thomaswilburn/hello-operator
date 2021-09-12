@@ -1,4 +1,4 @@
-import { Operator } from "./operator.js";
+import { Operator, OPERATOR_DEFAULTS } from "./operator.js";
 import { algorithms } from "./algorithms.js";
 
 var acConfig = {
@@ -76,7 +76,7 @@ export class Synth {
 
     var context = this.context = new AudioContext();
 
-    this.settings = JSON.parse(JSON.stringify(EPIANO));
+    this.settings = EPIANO.map(e => ({ ...OPERATOR_DEFAULTS, ...e }));
 
     // build some output processing
     this.amp = new GainNode(context, acConfig);
@@ -127,6 +127,7 @@ export class Synth {
       operator.enabled = "enabled" in operator ? !operator.enabled : false;
     }
     console.log(`Toggled operator #${index + 1}: ${operator.enabled ? "on" : "off"}`);
+    return operator.enabled;
   }
 
 }

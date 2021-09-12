@@ -82,7 +82,7 @@ input[as="display"]:focus {
 
   updateIndicator() {
     var { indicator } = this.elements;
-    var scaled = this.scaledValue;
+    var scaled = this.scaledvalue;
     var l = indicator.getTotalLength();
     indicator.style.strokeDasharray = `${l} ${l}`;
     indicator.style.strokeDashoffset = `${l - l * scaled}`;
@@ -108,19 +108,20 @@ input[as="display"]:focus {
     this.updateIndicator();
   }
 
-  get scaledValue() {
+  get scaledvalue() {
     var v = this.value;
     var min = this.min * 1 || 0;
     var max = this.max * 1 || 1;
     return (v - min) / (max - min);
   }
 
-  set scaledValue(v) {
+  set scaledvalue(v) {
     var min = this.min * 1;
     var max = this.max * 1;
     var d = max - min;
     this.value = v * d + min;
     this.updateIndicator();
+    this.dispatch(new Event("input"));
   }
 
   onInput(e) {
