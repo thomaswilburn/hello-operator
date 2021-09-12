@@ -9,7 +9,7 @@
 
     <h1>Hello Operator</h1>
 
-    <rotary-encoder min=0 max=100 value=100></rotary-encoder>
+    <rotary-encoder id=volume min=0 max=100 value=100>volume</rotary-encoder>
 
     <script type="module">
 
@@ -65,8 +65,27 @@ midi.on("noteoff", function(e) {
   dx7.noteOff(f);
 });
 
+// volume is 24
+// rotary encoders are 16-23
+// buttons are 102-109
+// modulation is 1
+//pitch is 
+
+var controlMap = {
+  24: "#volume"
+};
+
+for (var key in controlMap) {
+  controlMap[key] = document.querySelector(controlMap[key]);
+}
+
 midi.on("controlchange", function(e) {
   var { controller, value } = e.data;
+  if (controller in controlMap) {
+    var ui = controlMap[controller];
+    ui.scaledValue = value / 127;
+    return;
+  }
   var index = controller - 102;
   var enabled = !!value;
   dx7.toggleOperator(index);

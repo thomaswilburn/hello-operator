@@ -51,6 +51,13 @@ export class MIDITarget extends EventTarget {
         this.fire("controlchange", { channel, controller: b, value: c });
         break;
 
+      case PITCH_BEND:
+        var amount = (c << 7) | b;
+        var maxPitch = (2**14) - 1;
+        var scaled = (amount / maxPitch) * 2 - 1;
+        scaled = Math.round(scaled * 1000) / 1000;
+        this.fire("pitchbend", { channel, amount, scaled })
+
       // other message types unimplemented because my keyboard doesn't fire them
 
     }

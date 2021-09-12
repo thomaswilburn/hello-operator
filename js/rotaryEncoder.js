@@ -7,6 +7,11 @@ export class RotaryEncoder extends ElementBase {
   display: inline-block;
 }
 
+label {
+  text-transform: uppercase;
+  text-align: center;
+}
+
 .container {
   position: relative;
 }
@@ -47,6 +52,7 @@ input[as="display"]:focus {
 }
 
 </style>
+<label><slot></slot></label>
 <div class="container">
   <svg width=48 height=48 viewBox="0 0 32 32">
     <circle as="outer" cx=16 cy=16 r=14 />
@@ -94,6 +100,8 @@ input[as="display"]:focus {
   }
 
   set value(v) {
+    var step = (this.step || 1) * 1;
+    v = Math.round(v / step) * step;
     this.elements.display.value = v;
     this.updateIndicator();
   }
@@ -116,6 +124,7 @@ input[as="display"]:focus {
   onInput(e) {
     e.stopImmediatePropagation();
     this.updateIndicator();
+    this.dispatchEvent(new Event("input"));
   }
 
   onWheel(e) {
@@ -130,6 +139,7 @@ input[as="display"]:focus {
     if (v > this.max * 1) v = this.max;
     if (v < this.min * 1) v = this.min;
     this.value = v;
+    this.dispatchEvent(new Event("input"));
   }
 
   onKey(e) {
