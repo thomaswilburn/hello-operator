@@ -27,17 +27,16 @@ export class MIDITarget extends EventTarget {
     if (!navigator.requestMIDIAccess) return;
     var midi = await navigator.requestMIDIAccess();
     this.midi = midi;
-    for (var [ key, entry ] of midi.inputs) {
+    for (var entry of midi.inputs.values()) {
       entry.onmidimessage = this.onMIDI;
     }
-    this.fire("ready");
+    this.fire("ready", midi);
   }
 
   onMIDI(e) {
     var [ a, b, c ] = e.data;
     var message = a >> 4;
     var channel = a & 0xF;
-    console.log(message, channel, b, c);
     switch (message) {
       case NOTE_ON:
       case NOTE_OFF:
@@ -62,7 +61,7 @@ export class MIDITarget extends EventTarget {
     if (!this.midi) return;
     // should probably be targeted?
     var a = (message << 4) + channel;
-    for (var [ key, entry ] of this.midi.outputs) {
+    for (var entry of this.midi.outputs.values()) {
       entry.send([a, b, c]);
     }
   }
@@ -74,8 +73,9 @@ export class MIDITarget extends EventTarget {
     }
   }
 
-  fire(event, data) {
+  fire(event, data = {}) {
     var e = new MIDITargetEvent(event, data);
+    console.log(event, data);
     this.dispatchEvent(e);
   }
 

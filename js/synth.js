@@ -121,7 +121,7 @@ export class Synth {
   toggleOperator(index, value) {
     var operator = this.settings[index];
     if (!operator) return;
-    if (typeof value != undefined) {
+    if (typeof value != "undefined") {
       operator.enabled = value;
     } else {
       operator.enabled = "enabled" in operator ? !operator.enabled : false;

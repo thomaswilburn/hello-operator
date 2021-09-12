@@ -9,10 +9,13 @@
 
     <h1>Hello Operator</h1>
 
+    <rotary-encoder min=0 max=100 value=100></rotary-encoder>
+
     <script type="module">
 
 import { Synth } from "./js/synth.js";
 import { MIDITarget } from "./js/midi.js";
+import "./js/rotaryEncoder.js";
 
 var dx7 = new Synth();
 
@@ -70,7 +73,6 @@ midi.on("controlchange", function(e) {
 });
 
 midi.on("ready", function(e) {
-  console.log(e);
   // o2 keyboard seems to ignore this
   midi.sendReset();
 });
