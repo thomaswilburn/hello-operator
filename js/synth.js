@@ -118,10 +118,14 @@ export class Synth {
     this.voices.delete(frequency);
   }
 
-  toggleOperator(index) {
+  toggleOperator(index, value) {
     var operator = this.settings[index];
     if (!operator) return;
-    operator.enabled = "enabled" in operator ? !operator.enabled : false;
+    if (typeof value != undefined) {
+      operator.enabled = value;
+    } else {
+      operator.enabled = "enabled" in operator ? !operator.enabled : false;
+    }
     console.log(`Toggled operator #${index + 1}: ${operator.enabled ? "on" : "off"}`);
   }
 

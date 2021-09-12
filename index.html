@@ -12,6 +12,7 @@
     <script type="module">
 
 import { Synth } from "./js/synth.js";
+import { MIDITarget } from "./js/midi.js";
 
 var dx7 = new Synth();
 
@@ -48,41 +49,31 @@ document.documentElement.addEventListener("keyup", function(e) {
   dx7.noteOff(f);
 });
 
-const NOTE = 144;
-const ENCODER = 176;
-const DISCRETE = 192;
-const PITCH = 224;
+var midi = new MIDITarget();
 
-const VOLUME = 7;
-const MODULATION = 1;
+midi.on("noteon", function(e) {
+  var { key, pressure } = e.data;
+  var f = dx7.midiToFrequency(key);
+  dx7.noteOn(f, pressure);
+});
 
-var onMIDI = function(e) {
-  var [ type, key, value ] = e.data;
-  console.log(type, key, value);
-  switch (type) {
-    case NOTE:
-      var f = dx7.midiToFrequency(key);
-      if (value) {
-        dx7.noteOn(f, value);
-      } else {
-        dx7.noteOff(f);
-      }
-      break;
+midi.on("noteoff", function(e) {
+  var f = dx7.midiToFrequency(e.data.key);
+  dx7.noteOff(f);
+});
 
-    case DISCRETE:
-      dx7.toggleOperator(key);
-      break;
-  }
-}
+midi.on("controlchange", function(e) {
+  var { controller, value } = e.data;
+  var index = controller - 102;
+  var enabled = !!value;
+  dx7.toggleOperator(index);
+});
 
-var getMidi = async function() {
-  var midi = await navigator.requestMIDIAccess();
-  for (var [ key, entry ] of midi.inputs) {
-    entry.onmidimessage = onMIDI;
-  }
-};
-
-getMidi();
+midi.on("ready", function(e) {
+  console.log(e);
+  // o2 keyboard seems to ignore this
+  midi.sendReset();
+});
 
     </script>
   </body>
