@@ -10,10 +10,13 @@ export class RotaryEncoder extends ElementBase {
 label {
   text-transform: uppercase;
   text-align: center;
+  display: block;
 }
 
 .container {
   position: relative;
+  margin: auto;
+  width: 48px;
 }
 
 circle {
@@ -100,16 +103,15 @@ input[as="display"]:focus {
   }
 
   set value(v) {
-    var step = (this.step || 1) * 1;
-    v = Math.round(v / step) * step;
+    v = Number((v * 1).toFixed(2));
     this.elements.display.value = v;
     this.updateIndicator();
   }
 
   get scaledValue() {
     var v = this.value;
-    var min = this.min * 1;
-    var max = this.max * 1;
+    var min = this.min * 1 || 0;
+    var max = this.max * 1 || 1;
     return (v - min) / (max - min);
   }
 
@@ -128,16 +130,21 @@ input[as="display"]:focus {
   }
 
   onWheel(e) {
+    e.preventDefault();
     e.stopImmediatePropagation();
-    var step = this.step || (this.max - this.min) * .01;
+    var max = this.max || 1;
+    var min = this.min || 0;
+    max *= 1;
+    min *= 1;
+    var step = this.step * 1 || (max - min) * .01;
     var v = this.value;
     if (e.deltaY < 0) {
       v += step;
     } else {
       v -= step;
     }
-    if (v > this.max * 1) v = this.max;
-    if (v < this.min * 1) v = this.min;
+    if (v > max * 1) v = max;
+    if (v < min * 1) v = min;
     this.value = v;
     this.dispatchEvent(new Event("input"));
   }

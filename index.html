@@ -7,15 +7,16 @@
   </head>
   <body>
 
-    <h1>Hello Operator</h1>
-
     <rotary-encoder id=volume min=0 max=100 value=100>volume</rotary-encoder>
+
+    <operator-panel></operator-panel>
 
     <script type="module">
 
 import { Synth } from "./js/synth.js";
 import { MIDITarget } from "./js/midi.js";
 import "./js/rotaryEncoder.js";
+import "./js/operatorPanel.js";
 
 var dx7 = new Synth();
 
