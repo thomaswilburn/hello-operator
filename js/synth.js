@@ -6,15 +6,15 @@ var acConfig = {
 };
 
 var sustain = 0;
-var release = .1;
+var release = .3;
 
-const EPIANO = [
-  { sustain, release, decay: 10 },
-  { level: .3 },
-  { enabled: false },
-  { sustain, release, decay: 1.5 },
-  { },
-  { coarse: 3 }
+export const EPIANO = [
+  { ...OPERATOR_DEFAULTS, sustain, release, decay: 10, velocityScale: .5 },
+  { ...OPERATOR_DEFAULTS, level: .3 },
+  { ...OPERATOR_DEFAULTS, enabled: false },
+  { ...OPERATOR_DEFAULTS, sustain, release, decay: 1.5 },
+  { ...OPERATOR_DEFAULTS, },
+  { ...OPERATOR_DEFAULTS, coarse: 3 }
 ];
 
 export class Voice {
@@ -76,7 +76,7 @@ export class Synth {
 
     var context = this.context = new AudioContext();
 
-    this.settings = EPIANO.map(e => ({ ...OPERATOR_DEFAULTS, ...e }));
+    this.settings = EPIANO.map(e => ({ ...e }));
 
     // build some output processing
     this.amp = new GainNode(context, acConfig);
@@ -126,7 +126,7 @@ export class Synth {
     } else {
       operator.enabled = "enabled" in operator ? !operator.enabled : false;
     }
-    console.log(`Toggled operator #${index + 1}: ${operator.enabled ? "on" : "off"}`);
+    // console.log(`Toggled operator #${index * 1 + 1}: ${operator.enabled ? "on" : "off"}`);
     return operator.enabled;
   }
 

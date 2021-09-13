@@ -12,66 +12,54 @@
 
       <div class="operator-panel">
         <div class="op-enabled">
-          <input type="checkbox" id="op1-enabled" value="1" :checked="enabled.1" @input="toggleOp">
+          <input type="checkbox" id="op1-enabled" value="0">
           <label for="op1-enabled">OP 1</label>
 
-          <input type="checkbox" id="op2-enabled" value="2" :checked="enabled.2" @input="toggleOp">
+          <input type="checkbox" id="op2-enabled" value="1">
           <label for="op2-enabled">OP 2</label>
 
-          <input type="checkbox" id="op3-enabled" value="3" :checked="enabled.3" @input="toggleOp">
+          <input type="checkbox" id="op3-enabled" value="2">
           <label for="op3-enabled">OP 3</label>
 
-          <input type="checkbox" id="op4-enabled" value="4" :checked="enabled.4" @input="toggleOp">
+          <input type="checkbox" id="op4-enabled" value="3">
           <label for="op4-enabled">OP 4</label>
 
-          <input type="checkbox" id="op5-enabled" value="5" :checked="enabled.5" @input="toggleOp">
+          <input type="checkbox" id="op5-enabled" value="4">
           <label for="op5-enabled">OP 5</label>
 
-          <input type="checkbox" id="op6-enabled" value="6" :checked="enabled.6" @input="toggleOp">
+          <input type="checkbox" id="op6-enabled" value="5">
           <label for="op6-enabled">OP 6</label>
         </div>
 
         <div class="operator-selection">
           <label for="op-selected">Editing:</label>
-          <select id="op-selected" :value="editing" @change="selectOp">
-            <option value="1">OP 1</option>
-            <option value="2">OP 2</option>
-            <option value="3">OP 3</option>
-            <option value="4">OP 4</option>
-            <option value="5">OP 5</option>
-            <option value="6">OP 6</option>
+          <select id="op-selected">
+            <option value="0">OP 1</option>
+            <option value="1">OP 2</option>
+            <option value="2">OP 3</option>
+            <option value="3">OP 4</option>
+            <option value="4">OP 5</option>
+            <option value="5">OP 6</option>
           </select>
         </div>
 
         <div class="operator-editing">
           <div class="params">
             <rotary-encoder
-              :value="coarse"
-              @input="tweak"
-              min=".5" max="4"
-              value="1" step=".1"
+              data-param="coarse"
             > Coarse </rotary-encoder>
 
             <rotary-encoder
-              :value="fine"
-              @input="tweak"
-              min="-.5" max=".5"
-              value="0" step=".05"
+              data-param="fine"
             > Fine </rotary-encoder>
             
             <rotary-encoder
-              :value="fixed"
-              @input="tweak"
-              min="0" max="4000"
-              value="0" step="100"
+              data-param="fixed"
             > Fixed </rotary-encoder>
 
             <rotary-encoder
-              :value="depth"
-              @input="tweak"
-              min="0" max="100"
-              value="100"
-            > Depth </rotary-encoder>
+              data-param="level"
+            > Level </rotary-encoder>
           </div>
         </div>
       </div>

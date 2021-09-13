@@ -1,121 +1,179 @@
 
-import { Synth } from "./synth.js";
+import { Synth, EPIANO } from "./synth.js";
 import { MIDITarget } from "./midi.js";
 
-var dx7 = new Synth();
+var $ = (s, d = document) => [...d.querySelectorAll(s)];
+$.one = (s, d = document) => d.querySelector(s);
 
 var keys = "awsedftgyhujkolp;".split("");
 var keyMap = {};
-keys.forEach((k, i) => keyMap[k] = i + 72);
+keys.forEach((k, i) => keyMap[k] = i + 72 - 12);
 
-import createBinding from "./kudzu.js";
+var controlMap = {
+  16: "coarse",
+  17: "fine",
+  18: "fixed",
+  19: "level"
+};
 
-var main = document.querySelector("main");
+var enabledChecks = $(".op-enabled input");
+var paramEncoders = $("rotary-encoder[data-param]");
+var editingSelect = $.one("#op-selected");
 
-var base = dx7.settings[0];
-var binding = window.binding = createBinding(main, {
-  ...base,
-  enabled: {
-    1: true,
-    2: true,
-    3: false,
-    4: true,
-    5: true,
-    6: true
-  },
-  editing: 1,
-  selectOp(e) {
-    var editing = this.value * 1;
-    binding.set({ editing });
-    binding.updateOp();
-  },
-  updateOp() {
-    var settings = dx7.settings[binding.editing - 1];
-    var { coarse, fine, depth, fixed } = settings;
-    var merged = { coarse, fine, depth, fixed };
-    binding.set(merged);
-  },
-  toggleOp(e) {
-    var operator = this.value * 1;
-    var index = operator - 1;
-    binding.set(`enabled.${operator}`, dx7.toggleOperator(index));
-  },
-  tweak(e) {
-    var prop = this.getAttribute(":scaledvalue");
-    var value = this.value * 1;
-    console.log(prop, value);
-    var operator = dx7.settings[binding.editing - 1];
-    operator[prop] = value;
+var params = {
+  coarse: { min: .5, max: 4, step: .1 },
+  fine: { min: -.5, max: .5, step: .05 },
+  fixed: { min: 0, max: 2000, step: 50 },
+  level: { min: 0, max: 1, step: .1 }
+};
+
+var bound = `
+  onNoteOn onNoteOff onKeyDown onKeyUp onControlChange
+  onEditSelect syncEnabledFromUI syncParamsFromUI
+`.trim().split(/\s+/g);
+
+export class Controller {
+  constructor() {
+    // binding
+    for (var b of bound) {
+      this[b] = this[b].bind(this);
+    }
+
+    this.dx7 = new Synth();
+
+    this.midi = new MIDITarget();
+    this.midi.on("noteon", this.onNoteOn);
+    this.midi.on("noteoff", this.onNoteOff);
+    this.midi.on("controlchange", this.onControlChange);
+    document.documentElement.addEventListener("keydown", this.onKeyDown);
+    document.documentElement.addEventListener("keyup", this.onKeyUp);
+
+    $.one(".op-enabled").addEventListener("change", this.syncEnabledFromUI);
+    editingSelect.addEventListener("change", this.onEditSelect);
+
+    this.syncEnabledFromSynth();
+
+    this.editing = 0;
+    
+    this.params = {};
+    for (var p in params) {
+      var config = params[p];
+      var encoder = $.one(`rotary-encoder[data-param="${p}"]`);
+      for (var c in config) {
+        encoder[c] = config[c];
+      }
+      this.params[p] = {
+        ...config,
+        encoder
+      }
+    }
+    this.syncParamsFromSynth();
   }
-});
 
-// handle MIDI keys and assignments
-var midi = new MIDITarget();
+  getEditing() {
+    return this.dx7.settings[this.editing];
+  }
 
-midi.on("noteon", function(e) {
-  var { key, pressure } = e.data;
-  var f = dx7.midiToFrequency(key);
-  dx7.noteOn(f, pressure);
-});
+  syncEnabledFromSynth() {
+    for (var c of enabledChecks) {
+      c.checked = this.dx7.settings[c.value].enabled;
+    }
+  }
 
-midi.on("noteoff", function(e) {
-  var f = dx7.midiToFrequency(e.data.key);
-  dx7.noteOff(f);
-});
+  syncEnabledFromUI() {
+    for (var c of enabledChecks) {
+      this.dx7.settings[c.value].enabled = c.checked;
+    }
+  }
+
+  syncParamsFromSynth() {
+    var operator = this.getEditing();
+    for (var p in this.params) {
+      var { encoder } = this.params[p];
+      encoder.value = operator[p];
+    }
+  }
+
+  syncParamsFromUI() {
+
+  }
+
+  onNoteOn(e) {
+    var { key, pressure } = e.data;
+    var f = this.dx7.midiToFrequency(key);
+    this.dx7.noteOn(f, pressure / 127);
+  }
+
+  onNoteOff(e) {
+    var f = this.dx7.midiToFrequency(e.data.key);
+    this.dx7.noteOff(f);
+  }
+
+  onControlChange(e) {
+    var { controller, value } = e.data;
+    if (controller in controlMap) {
+      var target = controlMap[controller];
+      var ratio = value / 127;
+      var param = this.params[target]
+      if (!param) return;
+      param.encoder.scaledValue = ratio;
+      var editing = this.getEditing();
+      editing[target] = param.encoder.value;
+      return;
+    }
+    // handle switching between operators
+    if (controller == 102) {
+      // set current operator for editing
+      var current = editingSelect.value * 1;
+      if (current == value) {
+        this.dx7.toggleOperator(current);
+      } else {
+        editingSelect.value = value;
+        this.editing = value;
+      }
+      this.syncEnabledFromSynth();
+      this.syncParamsFromSynth();
+    }
+  }
+
+  onKeyDown(e) {
+    if ("123456".includes(e.key)) {
+     // set current operator for editing
+      var current = editingSelect.value * 1;
+      var value = e.key - 1;
+      if (current == value) {
+        this.dx7.toggleOperator(current);
+      } else {
+        editingSelect.value = value;
+      }
+      this.syncEnabledFromSynth();
+      return;
+    }
+    var note = keyMap[e.key];
+    if (!note) return;
+    var f = this.dx7.midiToFrequency(note);
+    this.dx7.noteOn(f, 1);
+  }
+
+  onKeyUp(e) {
+    var note = keyMap[e.key];
+    if (!note) return;
+    var f = this.dx7.midiToFrequency(note);
+    this.dx7.noteOff(f);
+  }
+
+  onEditSelect() {
+    var value = editingSelect.value;
+    this.editing = value;
+    this.syncParamsFromSynth();
+  }
+
+}
+
+export var controller = new Controller();
 
 // volume is 24
 // rotary encoders are 16-23
 // buttons are 102, values 0-7
 // modulation is 1
 // pitch is pitchbend event
-
-var controlMap = {
-  16: "coarse",
-  17: "fine",
-  18: "fixed",
-  19: "depth"
-};
-
-midi.on("controlchange", function(e) {
-  var { controller, value } = e.data;
-  if (controller in controlMap) {
-    var target = controlMap[controller];
-    binding.set(target, value / 127);
-    return;
-  }
-  // handle switching between operators
-  if (controller == 102) {
-    binding.set({ editing: value + 1 });
-    binding.updateOp();
-  }
-});
-
-// keyboard fallback
-document.documentElement.addEventListener("keydown", function(e) {
-  if (e.key == "]") {
-    dx7.algorithm = (dx7.algorithm + 1) % 33
-    if (dx7.algorithm == 0) dx7.algorithm++;
-    console.log(dx7.algorithm);
-    return;
-  }
-  if (e.key == "[") {
-    dx7.algorithm -= 1;
-    if (dx7.algorithm < 1) dx7.algorithm = 32;
-    console.log(dx7.algorithm);
-    return;
-  }
-  if ("123456".includes(e.key)) {
-    return dx7.toggleOperator(e.key - 1);
-  }
-  var note = keyMap[e.key];
-  if (!note) return;
-  var f = dx7.midiToFrequency(note);
-  dx7.noteOn(f, 127);
-});
-
-document.documentElement.addEventListener("keyup", function(e) {
-  var note = keyMap[e.key];
-  if (!note) return;
-  var f = dx7.midiToFrequency(note);
-  dx7.noteOff(f);
-});

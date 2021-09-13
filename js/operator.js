@@ -14,12 +14,10 @@ export const OPERATOR_DEFAULTS = {
   fine: 0,
   velocityScale: 1,
   attack: 0,
-  hold: 0,
   decay: 0,
   sustain: 1,
-  release: 0,
+  release: .1,
   wave: "sine",
-  depth: 1200,
   level: 1,
   feedback: 0
 };
@@ -74,17 +72,20 @@ export class Operator {
     var frequencyRatio = this.options.coarse + this.options.fine;
     this.pitch.offset.value = this.options.fixed || (frequency * frequencyRatio);
 
+    var unscaled = this.options.level * (1 - this.options.velocityScale);
+    var scaled = this.options.level * velocity * this.options.velocityScale;
+    var pressure = scaled + unscaled;
+    this.output.gain.value = pressure;
+
     this.osc.start(t);
 
     // schedule envelope: ADS
-    var { attack, decay, hold, sustain } = this.options;
+    var { attack, decay, sustain } = this.options;
     var a = t + attack;
-    var h = a + hold;
     var d = a + decay;
     if (attack) {
       this.envelope.gain.setValueAtTime(0, t);
       this.envelope.gain.exponentialRampToValueAtTime(1, a);
-      if (hold) this.envelope.gain.setValueAtTime(1, h);
     } else {
       this.envelope.gain.setValueAtTime(1, t);
     }
@@ -95,9 +96,11 @@ export class Operator {
     if (!this.options.enabled) return;
     var { release } = this.options;
     var t = this.context.currentTime;
+    var v = this.envelope.gain.value;
     this.envelope.gain.cancelScheduledValues(t);
+    this.envelope.gain.value = v;
     var r = t + release;
-    this.envelope.gain.linearRampToValueAtTime(0, r);
+    this.envelope.gain.exponentialRampToValueAtTime(0.001, r);
     this.osc.stop(r);
   }
 
